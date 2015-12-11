@@ -9,12 +9,14 @@ angular.module('recipes.services')
         @endpoint
         endpoint: null
         @url: "http://localhost:8000/api"
+        url: "http://localhost:8000/api"
 
-        constructor: () ->
+        @_createEntity: ->
+            return new @(@endpoint)
 
         @extract: (entities) ->
             for item in entities?
-                entity = new @()
+                entity = @_createEntity()
                 entity.deserialize(item)
                 @cache.push(entity)
 
@@ -32,16 +34,13 @@ angular.module('recipes.services')
             )
             return deferred.promise
 
-        @retrieve: (id) ->
+        @get: (id) ->
             deferred = $q.defer()
             url = @url + '/' + @endpoint + '/' + id + '/'
-            entity = new @()
+            entity = @_createEntity()
             $http.get(url).then(
                 (response) =>
-                    console.log("Got the response back!", response)
-                    #entity = new @()
                     entity.deserialize(response.data)
-                    #@cache.push(entity)
                     deferred.resolve(entity)
                 (error) =>
                     $log.error('retrieve failed', error)
@@ -49,16 +48,12 @@ angular.module('recipes.services')
             )
             return entity
 
-        @get: (id) =>
-            return _.find(@cache, (e) -> e.id == id)
-
-
         @create: (entity) ->
             deferred = $q.defer()
             url = @url + '/' + @endpoint + '/'
             $http.post(url, entity.serialize()).then(
                 (response) =>
-                    entity = new @()
+                    entity = @_createEntity
                     entity.deserialize(response.data)
                     @cache.push(entity)
                     deferred.resolve(entity)
@@ -83,25 +78,20 @@ angular.module('recipes.services')
             return deferred.promise
 
         update: ->
-            deferred = $q.defer()
             url = @url + '/' + @endpoint + '/' + @id + '/'
             $http.put(url, @serialize()).then(
                 (response) =>
-                    @deserialize(response.data.data)
-                    deferred.resolve(response.data.data)
+                    @deserialize(response.data)
                 (error) =>
-                    deferred.reject(error)
+                    console.log(error)
             )
-            return deferred.promise
+            return
 
-        delete: (entity) ->
+        delete: ->
             deferred = $q.defer()
             url = @url + '/' + @endpoint + '/' + entity.id + '/'
             $http.delete(url).then(
                 (response) =>
-                    _.remove(@cache, (e) ->
-                      return e.id == entity.id
-                    )
                     deferred.resolve(response)
                 (error) =>
                     deferred.reject(error)

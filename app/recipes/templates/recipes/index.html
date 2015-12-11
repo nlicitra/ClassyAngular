@@ -6,6 +6,11 @@
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.15/angular-ui-router.js"></script>
         <script type="text/javascript" src="static/js/app.js"></script>
         <div ui-view>UI ROUTER STUFF</div>
-        <div ng-controller="RecipesCtrl">[[myRecipe]]</div>
+        <div ng-controller="RecipesCtrl">
+            Name:<input type="text" ng-model="myRecipe.name" />
+            <span style="color:green" ng-if="myRecipe.synced">Synced</span><span style="color:red" ng-if="!myRecipe.synced">Not Synced</span><br/>
+            <input type="text" ng-repeat="ingredient in myRecipe.ingredients" ng-model="ingredient" /><br />
+            <button ng-click="myRecipe.update()">Save</button>
+        </div>
     </BODY>
 </HTML>

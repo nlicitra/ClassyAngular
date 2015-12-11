@@ -1,8 +1,7 @@
 angular.module('recipes.controllers', [])
 .controller('RecipesCtrl', ['$scope', 'Recipe', ($scope, Recipe) ->
     $scope.thing = "It worked"
-    console.log(Recipe.endpoint)
-    $scope.myRecipe = Recipe.retrieve(2)
+    $scope.myRecipe = Recipe.get(2)
     # Recipe.retrieve(2).then(
     #     (success) =>
     #         console.log("resolved:", success)

@@ -5,75 +5,59 @@ angular.module('recipes.services')
         ###
         Manager for performing crud operations on general entities
         ###
-        cache: []
-        @endpoint
-        endpoint: null
-        @url: "http://localhost:8000/api"
         url: "http://localhost:8000/api"
 
-        @_createEntity: ->
-            return new @(@endpoint)
-
-        @extract: (entities) ->
-            for item in entities?
-                entity = @_createEntity()
+        @extract: (data) ->
+            entities = []
+            for item in data
+                entity = new @()
                 entity.deserialize(item)
-                @cache.push(entity)
+                entities.push(entity)
+            return entities
 
         @list: (params={}) ->
-            deferred = $q.defer()
-            url = @url + '/' + @endpoint + '/'
+            entities = []
+            url = @prototype.url + '/' + @prototype.endpoint + '/'
             $http.get(url, {params:params}).then(
                 (response) =>
-                    @cache = []
-                    @extract(response.data)
-                    deferred.resolve(response.data)
+                    extracted = @extract(response.data)
+                    for e in extracted
+                        entities.push(e)
                 (error) =>
                     $log.error('request error')
-                    deferred.reject(error)
             )
-            return deferred.promise
+            return entities
 
         @get: (id) ->
-            deferred = $q.defer()
-            url = @url + '/' + @endpoint + '/' + id + '/'
-            entity = @_createEntity()
+            entity = new @()
+            url = @prototype.url + '/' + @prototype.endpoint + '/' + id + '/'
             $http.get(url).then(
                 (response) =>
                     entity.deserialize(response.data)
-                    deferred.resolve(entity)
                 (error) =>
                     $log.error('retrieve failed', error)
-                    deferred.reject(error)
             )
             return entity
 
-        @create: (entity) ->
-            deferred = $q.defer()
-            url = @url + '/' + @endpoint + '/'
-            $http.post(url, entity.serialize()).then(
+        @create: (params) ->
+            entity = new @()
+            url = @prototype.url + '/' + @prototype.endpoint + '/'
+            $http.post(url, params).then(
                 (response) =>
-                    entity = @_createEntity
                     entity.deserialize(response.data)
-                    @cache.push(entity)
-                    deferred.resolve(entity)
                 (error) =>
                     $log.error(error)
-                    deferred.reject(error)
             )
-            return deferred.promise
+            return entity
 
         @createMany: (entities) ->
-            deferred = $q.defer()
-            url = @url + '/' + @endpoint + '/'
+            url = @prototype.url + '/' + @prototype.endpoint + '/'
             post_data = (e.toServer() for e in entities)
             $http.post(url, post_data).then(
                 (response) =>
-                    @extract(response.data.data)
-                    deferred.resolve(response.data.data)
+                    @extract(response.data)
                 (error) =>
                     $log.error(error)
-                    deferred.reject(error)
             )
             return deferred.promise
 
@@ -87,11 +71,24 @@ angular.module('recipes.services')
             )
             return
 
+        save: ->
+            if @id
+                @update()
+            else
+                url = @url + '/' + @endpoint + '/'
+                $http.post(url, @serialize()).then(
+                    (response) =>
+                        @deserialize(response.data)
+                    (error) =>
+                        $log.error(error)
+                )
+
         delete: ->
-            deferred = $q.defer()
             url = @url + '/' + @endpoint + '/' + entity.id + '/'
             $http.delete(url).then(
                 (response) =>
+                    delete(@id)
+                    @synced = false
                     deferred.resolve(response)
                 (error) =>
                     deferred.reject(error)

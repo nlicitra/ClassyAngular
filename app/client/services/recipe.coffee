@@ -2,14 +2,15 @@ angular.module('recipes.services')
 
 .factory('Recipe', ['RESTfulEntity', (RESTfulEntity) ->
     class Recipe extends RESTfulEntity
-        @endpoint: "recipes"
+        endpoint: "recipes"
 
-        constructor: (@endpoint)->
+        constructor: () ->
+            @ingredients = []
 
         deserialize: (data) ->
             @id = data.id
             @name = data.name
-            @ingredients = data.ingredients
+            @ingredients = data.ingredients or []
             @synced = true
 
         serialize: ->

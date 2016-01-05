@@ -5,12 +5,17 @@
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.min.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.15/angular-ui-router.js"></script>
         <script type="text/javascript" src="static/js/app.js"></script>
-        <div ui-view>UI ROUTER STUFF</div>
         <div ng-controller="RecipesCtrl">
-            Name:<input type="text" ng-model="myRecipe.name" />
-            <span style="color:green" ng-if="myRecipe.synced">Synced</span><span style="color:red" ng-if="!myRecipe.synced">Not Synced</span><br/>
-            <input type="text" ng-repeat="ingredient in myRecipe.ingredients" ng-model="ingredient" /><br />
-            <button ng-click="myRecipe.update()">Save</button>
+            <div ng-repeat="recipe in recipes">
+                Name:<input type="text" ng-model="recipe.name" />
+                <span style="color:green" ng-if="recipe.synced">Synced</span><span style="color:red" ng-if="!recipe.synced">Not Synced</span><br/>
+                <div ng-repeat="ingredient in recipe.ingredients track by $index">
+                    <input type="text"  ng-model="recipe.ingredients[$index]" /><br />
+                </div>
+                <button ng-click="recipe.ingredients.push('')">Add Ingredient</button>
+                <button ng-click="recipe.save()">Save</button>
+            </div>
+            <button ng-click="add()">Add Recipe</button>
         </div>
     </BODY>
 </HTML>

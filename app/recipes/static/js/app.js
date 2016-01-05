@@ -14,8 +14,16 @@ angular.module('ClassyAngular', ['ui.router', 'recipes']).config([
 
 angular.module('recipes.controllers', []).controller('RecipesCtrl', [
   '$scope', 'Recipe', function($scope, Recipe) {
-    $scope.thing = "It worked";
-    return $scope.myRecipe = Recipe.get(2);
+    $scope.recipes = Recipe.list();
+    Recipe.get(2);
+    $scope.createdRecipe = Recipe.create({
+      name: "Test Create",
+      ingredients: ["i1", "i2"]
+    });
+    console.log($scope.createdRecipe);
+    return $scope.add = function() {
+      return $scope.recipes.push(new Recipe());
+    };
   }
 ]);
 
@@ -32,100 +40,83 @@ angular.module('recipes.services').factory('RESTfulEntity', [
       Manager for performing crud operations on general entities
        */
 
-      RESTfulEntity.prototype.cache = [];
-
-      RESTfulEntity.endpoint;
-
-      RESTfulEntity.prototype.endpoint = null;
-
-      RESTfulEntity.url = "http://localhost:8000/api";
-
       RESTfulEntity.prototype.url = "http://localhost:8000/api";
 
-      RESTfulEntity._createEntity = function() {
-        return new this(this.endpoint);
-      };
-
-      RESTfulEntity.extract = function(entities) {
-        var entity, i, item, len, ref, results;
-        ref = entities != null;
-        results = [];
-        for (i = 0, len = ref.length; i < len; i++) {
-          item = ref[i];
-          entity = this._createEntity();
+      RESTfulEntity.extract = function(data) {
+        var entities, entity, i, item, len;
+        entities = [];
+        for (i = 0, len = data.length; i < len; i++) {
+          item = data[i];
+          entity = new this();
           entity.deserialize(item);
-          results.push(this.cache.push(entity));
+          entities.push(entity);
         }
-        return results;
+        return entities;
       };
 
       RESTfulEntity.list = function(params) {
-        var deferred, url;
+        var entities, url;
         if (params == null) {
           params = {};
         }
-        deferred = $q.defer();
-        url = this.url + '/' + this.endpoint + '/';
+        entities = [];
+        url = this.prototype.url + '/' + this.prototype.endpoint + '/';
         $http.get(url, {
           params: params
         }).then((function(_this) {
           return function(response) {
-            _this.cache = [];
-            _this.extract(response.data);
-            return deferred.resolve(response.data);
+            var e, extracted, i, len, results;
+            extracted = _this.extract(response.data);
+            results = [];
+            for (i = 0, len = extracted.length; i < len; i++) {
+              e = extracted[i];
+              results.push(entities.push(e));
+            }
+            return results;
           };
         })(this), (function(_this) {
           return function(error) {
-            $log.error('request error');
-            return deferred.reject(error);
+            return $log.error('request error');
           };
         })(this));
-        return deferred.promise;
+        return entities;
       };
 
       RESTfulEntity.get = function(id) {
-        var deferred, entity, url;
-        deferred = $q.defer();
-        url = this.url + '/' + this.endpoint + '/' + id + '/';
-        entity = this._createEntity();
+        var entity, url;
+        entity = new this();
+        url = this.prototype.url + '/' + this.prototype.endpoint + '/' + id + '/';
         $http.get(url).then((function(_this) {
           return function(response) {
-            entity.deserialize(response.data);
-            return deferred.resolve(entity);
+            return entity.deserialize(response.data);
           };
         })(this), (function(_this) {
           return function(error) {
-            $log.error('retrieve failed', error);
-            return deferred.reject(error);
+            return $log.error('retrieve failed', error);
           };
         })(this));
         return entity;
       };
 
-      RESTfulEntity.create = function(entity) {
-        var deferred, url;
-        deferred = $q.defer();
-        url = this.url + '/' + this.endpoint + '/';
-        $http.post(url, entity.serialize()).then((function(_this) {
+      RESTfulEntity.create = function(params) {
+        var entity, url;
+        entity = new this();
+        url = this.prototype.url + '/' + this.prototype.endpoint + '/';
+        $http.post(url, params).then((function(_this) {
           return function(response) {
-            entity = _this._createEntity;
-            entity.deserialize(response.data);
-            _this.cache.push(entity);
-            return deferred.resolve(entity);
+            return entity.deserialize(response.data);
           };
         })(this), (function(_this) {
           return function(error) {
-            $log.error(error);
-            return deferred.reject(error);
+            return $log.error(error);
           };
         })(this));
-        return deferred.promise;
+        return entity;
       };
 
       RESTfulEntity.createMany = function(entities) {
-        var deferred, e, post_data, url;
-        deferred = $q.defer();
-        url = this.url + '/' + this.endpoint + '/';
+        var e, post_data, url;
+        url = this.prototype.url + '/' + this.prototype.endpoint + '/';
         post_data = (function() {
           var i, len, results;
           results = [];
@@ -137,13 +128,11 @@ angular.module('recipes.services').factory('RESTfulEntity', [
         })();
         $http.post(url, post_data).then((function(_this) {
           return function(response) {
-            _this.extract(response.data.data);
-            return deferred.resolve(response.data.data);
+            return _this.extract(response.data);
           };
         })(this), (function(_this) {
           return function(error) {
-            $log.error(error);
-            return deferred.reject(error);
+            return $log.error(error);
           };
         })(this));
         return deferred.promise;
@@ -163,12 +152,31 @@ angular.module('recipes.services').factory('RESTfulEntity', [
         })(this));
       };
 
+      RESTfulEntity.prototype.save = function() {
+        var url;
+        if (this.id) {
+          return this.update();
+        } else {
+          url = this.url + '/' + this.endpoint + '/';
+          return $http.post(url, this.serialize()).then((function(_this) {
+            return function(response) {
+              return _this.deserialize(response.data);
+            };
+          })(this), (function(_this) {
+            return function(error) {
+              return $log.error(error);
+            };
+          })(this));
+        }
+      };
+
       RESTfulEntity.prototype["delete"] = function() {
-        var deferred, url;
-        deferred = $q.defer();
+        var url;
         url = this.url + '/' + this.endpoint + '/' + entity.id + '/';
         $http["delete"](url).then((function(_this) {
           return function(response) {
+            delete _this.id;
+            _this.synced = false;
             return deferred.resolve(response);
           };
         })(this), (function(_this) {
@@ -194,16 +202,16 @@ angular.module('recipes.services').factory('Recipe', [
     Recipe = (function(superClass) {
       extend(Recipe, superClass);
 
-      Recipe.endpoint = "recipes";
+      Recipe.prototype.endpoint = "recipes";
 
-      function Recipe(endpoint) {
-        this.endpoint = endpoint;
+      function Recipe() {
+        this.ingredients = [];
       }
 
       Recipe.prototype.deserialize = function(data) {
         this.id = data.id;
         this.name = data.name;
-        this.ingredients = data.ingredients;
+        this.ingredients = data.ingredients || [];
         return this.synced = true;
       };
 
@@ -229,8 +237,6 @@ var Factory, FactoryA, FactoryB,
 
 Factory = (function() {
   Factory.url = "http://www.website.com";
-
-  Factory.endpoint;
 
   Factory.prototype.endpoint = "";
 
@@ -267,6 +273,8 @@ FactoryA = (function(superClass) {
     return FactoryA.__super__.constructor.apply(this, arguments);
   }
 
+  FactoryA.prototype.endpoint = "FactoryA";
+
   return FactoryA;
 
 })(Factory);
@@ -277,6 +285,8 @@ FactoryB = (function(superClass) {
   function FactoryB() {
     return FactoryB.__super__.constructor.apply(this, arguments);
   }
+
+  FactoryB.prototype.endpoint = "FactoryB";
 
   return FactoryB;
 

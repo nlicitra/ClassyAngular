@@ -1,6 +1,5 @@
 class Factory
     @url: "http://www.website.com"
-    @endpoint
     endpoint: ""
     id: ""
 
@@ -19,4 +18,7 @@ class Factory
         return @url + "/" + @endpoint + "/" + @id + "/"
 
 class FactoryA extends Factory
+    endpoint: "FactoryA"
+
 class FactoryB extends Factory
+    endpoint: "FactoryB"

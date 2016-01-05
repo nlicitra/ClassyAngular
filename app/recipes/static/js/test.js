@@ -6,8 +6,6 @@ var Factory, FactoryA, FactoryB,
 Factory = (function() {
   Factory.url = "http://www.website.com";
 
-  Factory.endpoint;
-
   Factory.prototype.endpoint = "";
 
   Factory.prototype.id = "";
@@ -43,6 +41,8 @@ FactoryA = (function(superClass) {
     return FactoryA.__super__.constructor.apply(this, arguments);
   }
 
+  FactoryA.prototype.endpoint = "FactoryA";
+
   return FactoryA;
 
 })(Factory);
@@ -53,6 +53,8 @@ FactoryB = (function(superClass) {
   function FactoryB() {
     return FactoryB.__super__.constructor.apply(this, arguments);
   }
+
+  FactoryB.prototype.endpoint = "FactoryB";
 
   return FactoryB;
 

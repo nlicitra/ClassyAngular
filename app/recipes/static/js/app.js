@@ -15,12 +15,6 @@ angular.module('ClassyAngular', ['ui.router', 'recipes']).config([
 angular.module('recipes.controllers', []).controller('RecipesCtrl', [
   '$scope', 'Recipe', function($scope, Recipe) {
     $scope.recipes = Recipe.list();
-    Recipe.get(2);
-    $scope.createdRecipe = Recipe.create({
-      name: "Test Create",
-      ingredients: ["i1", "i2"]
-    });
-    console.log($scope.createdRecipe);
     return $scope.add = function() {
       return $scope.recipes.push(new Recipe());
     };
@@ -54,10 +48,13 @@ angular.module('recipes.services').factory('RESTfulEntity', [
         return entities;
       };
 
-      RESTfulEntity.list = function(params) {
+      RESTfulEntity.list = function(params, defer) {
         var entities, url;
         if (params == null) {
           params = {};
+        }
+        if (defer == null) {
+          defer = false;
         }
         entities = [];
         url = this.prototype.url + '/' + this.prototype.endpoint + '/';
@@ -79,23 +76,36 @@ angular.module('recipes.services').factory('RESTfulEntity', [
             return $log.error('request error');
           };
         })(this));
-        return entities;
+        if (defer) {
+          return deferred.promise;
+        } else {
+          return entities;
+        }
       };
 
-      RESTfulEntity.get = function(id) {
-        var entity, url;
+      RESTfulEntity.get = function(id, defer) {
+        var deferred, entity, url;
+        if (defer == null) {
+          defer = false;
+        }
+        deferred = $q.defer();
         entity = new this();
         url = this.prototype.url + '/' + this.prototype.endpoint + '/' + id + '/';
         $http.get(url).then((function(_this) {
           return function(response) {
-            return entity.deserialize(response.data);
+            entity.deserialize(response.data);
+            return deferred.resolve(entity);
           };
         })(this), (function(_this) {
           return function(error) {
             return $log.error('retrieve failed', error);
           };
         })(this));
-        return entity;
+        if (defer) {
+          return deferred.promise;
+        } else {
+          return entity;
+        }
       };
 
       RESTfulEntity.create = function(params) {
@@ -147,7 +157,7 @@ angular.module('recipes.services').factory('RESTfulEntity', [
           };
         })(this), (function(_this) {
           return function(error) {
-            return console.log(error);
+            return $log.error(error);
           };
         })(this));
       };
@@ -172,19 +182,17 @@ angular.module('recipes.services').factory('RESTfulEntity', [
 
       RESTfulEntity.prototype["delete"] = function() {
         var url;
-        url = this.url + '/' + this.endpoint + '/' + entity.id + '/';
-        $http["delete"](url).then((function(_this) {
+        url = this.url + '/' + this.endpoint + '/' + this.id + '/';
+        return $http["delete"](url).then((function(_this) {
           return function(response) {
-            delete _this.id;
-            _this.synced = false;
-            return deferred.resolve(response);
+            _this.id = void 0;
+            return _this.synced = false;
           };
         })(this), (function(_this) {
           return function(error) {
-            return deferred.reject(error);
+            return $log.error(error);
           };
         })(this));
-        return deferred.promise;
       };
 
       return RESTfulEntity;

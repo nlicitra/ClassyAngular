@@ -15,7 +15,7 @@ angular.module('recipes.services')
                 entities.push(entity)
             return entities
 
-        @list: (params={}) ->
+        @list: (params={}, defer=false) ->
             entities = []
             url = @prototype.url + '/' + @prototype.endpoint + '/'
             $http.get(url, {params:params}).then(
@@ -25,19 +25,22 @@ angular.module('recipes.services')
                         entities.push(e)
                 (error) =>
                     $log.error('request error')
-            )
-            return entities
 
-        @get: (id) ->
+            )
+            return if defer then deferred.promise else entities
+
+        @get: (id, defer=false) ->
+            deferred = $q.defer()
             entity = new @()
             url = @prototype.url + '/' + @prototype.endpoint + '/' + id + '/'
             $http.get(url).then(
                 (response) =>
                     entity.deserialize(response.data)
+                    deferred.resolve(entity)
                 (error) =>
                     $log.error('retrieve failed', error)
             )
-            return entity
+            return if defer then deferred.promise else entity
 
         @create: (params) ->
             entity = new @()
@@ -67,7 +70,7 @@ angular.module('recipes.services')
                 (response) =>
                     @deserialize(response.data)
                 (error) =>
-                    console.log(error)
+                    $log.error(error)
             )
             return
 
@@ -84,14 +87,12 @@ angular.module('recipes.services')
                 )
 
         delete: ->
-            url = @url + '/' + @endpoint + '/' + entity.id + '/'
+            url = @url + '/' + @endpoint + '/' + @id + '/'
             $http.delete(url).then(
                 (response) =>
-                    delete(@id)
+                    @id = undefined
                     @synced = false
-                    deferred.resolve(response)
                 (error) =>
-                    deferred.reject(error)
+                    $log.error(error)
             )
-            return deferred.promise
 ])

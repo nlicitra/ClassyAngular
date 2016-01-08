@@ -4,16 +4,24 @@
     <BODY>
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.min.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.15/angular-ui-router.js"></script>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-7s5uDGW3AHqw6xtJmNNtr+OBRJUlgkNJEo78P4b0yRw= sha512-nNo+yCHEyn0smMxSswnf/OnX6/KwJuZTlNZBjauKhTK0c+zT+q5JOCx0UFhXQ6rJR9jg6Es8gPuD2uZcYDLqSw==" crossorigin="anonymous">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha256-KXn5puMvxCw+dAYznun+drMdG1IFl3agK0p/pqT9KAo= sha512-2e8qq0ETcfWRI4HJBzQiA3UoyFk6tbNyG+qSaIBZLyW9Xf3sWZHN/lxe9fTh1U45DpPf07yj94KsUHHWe4Yk1A==" crossorigin="anonymous"></script>
         <script type="text/javascript" src="static/js/app.js"></script>
-        <div ng-controller="RecipesCtrl">
-            <div ng-repeat="recipe in recipes">
-                Name:<input type="text" ng-model="recipe.name" />
+        <div ng-controller="RecipesCtrl" class="container" style="{'margin': auto}">
+            <div ng-repeat="recipe in recipes" class="form-inline">
+                <span>[[recipe.id]]</span>
+                <label for="nameInput">Name:</label>
+                <input id="nameInput" type="text" ng-model="recipe.name" class="form-control"/>
                 <span style="color:green" ng-if="recipe.synced">Synced</span><span style="color:red" ng-if="!recipe.synced">Not Synced</span><br/>
-                <div ng-repeat="ingredient in recipe.ingredients track by $index">
-                    <input type="text"  ng-model="recipe.ingredients[$index]" /><br />
-                </div>
+                <ul ng-repeat="ingredient in recipe.ingredients track by $index">
+                    <li><input type="text"  ng-model="recipe.ingredients[$index]" class="form-control"/></li>
+                </ul>
                 <button ng-click="recipe.ingredients.push('')">Add Ingredient</button>
+                <br/>
                 <button ng-click="recipe.save()">Save</button>
+                <button ng-click="recipe.delete()">Delete</button>
+                <hr/>
             </div>
             <button ng-click="add()">Add Recipe</button>
         </div>
